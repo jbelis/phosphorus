@@ -2068,6 +2068,14 @@ P.compile = (function() {
       if (LOG_PRIMITIVES) {
         source += 'console.log(' + val(block[0]) + ');\n';
       }
+      if (typeof P_DEBUG !== 'undefined') {
+        source += 'P.debug(';
+        for (var i = 1; i < block.length; i++) {
+          if (i > 1) source += ', ';
+          source += val(block[i]);
+        }
+        source += ');\n';
+      }
 
       if (['forward:', 'turnRight:', 'turnLeft:', 'heading:', 'pointTowards:', 'gotoX:y:', 'gotoSpriteOrMouse:', 'changeXposBy:', 'xpos:', 'changeYposBy:', 'ypos:', 'bounceOffEdge', 'setRotationStyle', 'lookLike:', 'nextCostume', 'showBackground:', 'startScene', 'nextBackground', 'nextScene', 'startSceneAndWait', 'say:duration:elapsed:from:', 'say:', 'think:duration:elapsed:from:', 'think:', 'changeGraphicEffect:by:', 'setGraphicEffect:to:', 'filterReset', 'changeSizeBy:', 'setSizeTo:', 'show', 'hide', 'comeToFront', 'goBackByLayers:', 'putPenDown', 'stampCostume', 'showVariable:', 'hideVariable:', 'glideSecs:toX:y:elapsed:from:', 'createCloneOf', 'deleteClone', 'doAsk'].indexOf(block[0]) > -1) {
         source += 'VISUAL = true;\n';
