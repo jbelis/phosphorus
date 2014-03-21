@@ -1,17 +1,12 @@
 var fs = require('fs');
-
-require('./mock-dom.js');
-var P = require('./phosphorus');
-global.P_DEBUG = true;
+var url = require('url');
+var exec = require('child_process').exec;
 
 var id = +process.argv[2];
-
-var testCount = 0;
-var failCount = 0;
-var passCount = 0;
+var tests = [];
 
 if (id) {
-  runTest(id);
+  addTest(id);
   done();
 } else {
   fs.readdir('test', function(err, files) {
@@ -25,7 +20,7 @@ if (id) {
       if (!file) {
         done();
       } else if (/^\d+\.json$/.test(file)) {
-        runTest(file.slice(0, -5), next);
+        addTest(file.slice(0, -5), next);
       } else {
         setImmediate(next);
       }
@@ -33,48 +28,51 @@ if (id) {
   });
 }
 
-function runTest(id, cb) {
+function addTest(id, cb) {
   fs.readFile('test/' + id + '.json', function(err, data) {
-    if (data) try {
-      var json = P.IO.parseJSONish(data + '');
-    } catch (e) {
-      err = true;
-    }
     if (err || !data) {
-      console.log('Error: skipping test ' + id + '.');
-      return;
+      console.log('Error: invalid test ' + id + '.');
+      process.exit(1);
     }
-    testCount += 1;
-    P.IO.loadJSONProject(json.project, function(stage) {
-      var output = [];
-      P.debug = function(obj, op, args) {
-        output.push({
-          obj: obj,
-          op: op,
-          args: args
-        });
-      };
-
-      var stop = false;
-      stage.handleError = function() {
-        console.log('Fail: internal error');
-        failCount += 1;
-        stop = true;
-        cb();
-      };
-
-      stage.triggerGreenFlag();
-
-      for (var i = 0; !stop && (json.maxFrames ? i < json.maxFrames : stage.queue.length || stage.children.some(function(s) {return s.queue.length})); i++) {
-        stage.step();
-      }
-      if (!stop) {
-        passCount += 1;
-      }
-    });
+    tests.push(data);
+    cb();
   });
 }
 
 function done() {
-  console.log('Ran ' + testCount + ' tests with ' + failCount + ' failures.');
+  console.log('Found ' + tests.length + ' test' + (tests.length !== 1 ? 's' : '') + '...');
+
+  process.env.PORT = 9007;
+  process.env.HOST = '0.0.0.0';
+  require('./server').on('request', function(req, res) {
+    var u = url.parse(req.url);
+    if (u.pathname === '/test-run') {
+      fs.readFile(__dirname + '/test-run.html', function(err, data) {
+        if (err || !data) {
+          res.writeHead(404);
+          return res.end();
+        }
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        return res.end((data+'').replace(/\/\*tests\*\//, tests.join(',')));
+      });
+    }
+    if (u.pathname === '/test-result') {
+      var data = '';
+      req.on('data', function(b) {
+        data += b;
+      });
+      req.on('end', function() {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          console.log('Error: received invalid test data.');
+        }
+        console.log(data);
+        res.end();
+        // process.exit(0);
+      });
+    }
+  });
+
+  exec('./open-url http://localhost:9007/test-run');
 }

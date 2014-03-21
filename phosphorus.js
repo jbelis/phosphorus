@@ -1718,7 +1718,7 @@ var P = (function() {
     context.restore();
   };
 
-  var P = {
+  return {
     hasTouchEvents: hasTouchEvents,
     getKeyCode: getKeyCode,
     IO: IO,
@@ -1727,10 +1727,6 @@ var P = (function() {
     Sprite: Sprite,
     Watcher: Watcher
   };
-
-  if (typeof module !== 'undefined') module.exports = P;
-
-  return P;
 
 }());
 
@@ -2073,7 +2069,7 @@ P.compile = (function() {
         source += 'console.log(' + val(block[0]) + ');\n';
       }
       if (typeof P_DEBUG !== 'undefined') {
-        source += 'P.debug(' + val(block[0]) + ', [';
+        source += 'P.debug(S.objName, ' + val(block[0]) + ', [';
         for (var i = 1; i < block.length; i++) {
           if (i > 1) source += ', ';
           source += val(block[i]);

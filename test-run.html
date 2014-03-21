@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>Test Runner</title>
+<style>
+html {
+  display: table;
+  width: 100%;
+  height: 100%;
+  font: 24px Helvetica, sans-serif;
+}
+body {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+</style>
+
+<script src=//canvg.googlecode.com/svn/trunk/rgbcolor.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/StackBlur.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/canvg.js></script>
+<script src=phosphorus.js></script>
+<script>
+
+var testData = [/*tests*/];
+
+var test = 0;
+var failed = [];
+var passed = [];
+
+window.P_DEBUG = true;
+
+(function next() {
+  var json = testData[test++];
+  if (!json) return P.submit();
+  P.IO.loadJSONProject(json.project, function(stage) {
+    var output = [];
+    P.debug = function(obj, op, args) {
+      output.push({
+        obj: obj,
+        op: op,
+        args: args
+      });
+    };
+    var stop = false;
+    stage.handleError = function() {
+      failed.push(json.projectID);
+      stop = true;
+      cb();
+    };
+    stage.triggerGreenFlag();
+    for (var i = 0; json.maxFrames ? i < json.maxFrames : stage.queue.length || stage.children.some(function(s) {return s.queue && s.queue.length}); i++) {
+      if (stop) return next();
+      stage.step();
+    }
+    if (!stop) {
+      console.log(JSON.stringify(output));
+      passed.push(json.projectID);
+    }
+    next();
+  });
+})();
+
+P.submit = function() {
+  var xhr = new XMLHttpRequest;
+  xhr.open('POST', '/test-result', true);
+  xhr.send(JSON.stringify({
+    failed: failed,
+    passed: passed
+  }));
+  xhr.onload = function() {
+    document.body.innerHTML = 'You can close the window/tab now.';
+  };
+};
+
+</script>

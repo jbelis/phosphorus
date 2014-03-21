@@ -10,7 +10,7 @@ var MIME_TYPES = {
   svg: 'image/svg+xml'
 };
 
-http.createServer(function(req, res) {
+module.exports = http.createServer(function(req, res) {
 
   var u = url.parse(req.url);
 
@@ -41,6 +41,7 @@ http.createServer(function(req, res) {
     return;
   }
 
+  if (u.pathname.slice(0, 5) === '/test') return;
   if (u.pathname === '/') {
     u.pathname = '/index.html';
   }
