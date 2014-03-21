@@ -1,0 +1,12 @@
+#!/bin/sh
+if [ -n "$BROWSER" ]; then
+	$BROWSER $1
+elif hash xdg-open 2>/dev/null; then
+	xdg-open $1
+elif hash gnome-open 2>/dev/null; then
+	gnome-open $1
+elif hash open 2>/dev/null; then
+	open $1
+else
+	echo "Please open $1 in a web browser."
+fi
