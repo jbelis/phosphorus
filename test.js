@@ -6,8 +6,7 @@ var id = +process.argv[2];
 var tests = [];
 
 if (id) {
-  addTest(id);
-  done();
+  addTest(id, done);
 } else {
   fs.readdir('test', function(err, files) {
     if (err || !files) {

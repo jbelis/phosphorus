@@ -35,6 +35,9 @@ window.P_DEBUG = true;
   P.IO.loadJSONProject(json.project, function(stage) {
     var output = [];
     P.debug = function(obj, op, args) {
+      if (op === 'say:' || op === 'setVar:to:') {
+        console.log(obj + ': ' + args.pop());
+      }
       output.push({
         obj: obj,
         op: op,
@@ -51,9 +54,11 @@ window.P_DEBUG = true;
     for (var i = 0; json.maxFrames ? i < json.maxFrames : stage.queue.length || stage.children.some(function(s) {return s.queue && s.queue.length}); i++) {
       if (stop) return next();
       stage.step();
+      console.log('FRAME');
+      output.push({FRAME: true});
     }
     if (!stop) {
-      console.log(JSON.stringify(output));
+      // console.log(JSON.stringify(output));
       passed.push(json.projectID);
     }
     next();
