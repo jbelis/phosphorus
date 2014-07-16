@@ -1805,7 +1805,10 @@ P.compile = (function() {
   'use strict';
 
   var LOG_PRIMITIVES;
+  var COMMENT_PRIMITIVES;
+
   // LOG_PRIMITIVES = true;
+  // COMMENT_PRIMITIVES = true;
 
   var EVENT_SELECTORS = [
     'procDef',
@@ -2138,6 +2141,14 @@ P.compile = (function() {
     var compile = function(block) {
       if (LOG_PRIMITIVES) {
         source += 'console.log(' + val(block[0]) + ');\n';
+      }
+      if (COMMENT_PRIMITIVES) {
+        var blockComment = function(b) {
+          return b[0] + '(' + b.slice(1).map(function(x) {
+            return Array.isArray(x) ? (typeof x[0] === 'string' ? blockComment(x) : '{...}') : JSON.stringify(x);
+          }).join(', ') + ')';
+        };
+        source += '// ' + blockComment(block) + '\n';
       }
 
       if (['forward:', 'turnRight:', 'turnLeft:', 'heading:', 'pointTowards:', 'gotoX:y:', 'gotoSpriteOrMouse:', 'changeXposBy:', 'xpos:', 'changeYposBy:', 'ypos:', 'bounceOffEdge', 'setRotationStyle', 'lookLike:', 'nextCostume', 'say:duration:elapsed:from:', 'say:', 'think:duration:elapsed:from:', 'think:', 'changeGraphicEffect:by:', 'setGraphicEffect:to:', 'filterReset', 'changeSizeBy:', 'setSizeTo:', 'comeToFront', 'goBackByLayers:', 'glideSecs:toX:y:elapsed:from:'].indexOf(block[0]) > -1) {
