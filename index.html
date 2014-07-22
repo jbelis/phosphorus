@@ -50,7 +50,7 @@
 </section>
 <section>
   <h1>Bookmarklet</h1>
-  <p>Drag <a href="javascript:(function(){var x=/https?:\/\/scratch\.mit\.edu\/projects\/(\d+)\/?/.exec(location);if(x){location='http://phosphorus.herokuapp.com/#'+x[1]}x=/https?:\/\/phosphorus\.herokuapp\.com\/#(\d+)?/.exec(location);if(x){location='http://scratch.mit.edu/projects/'+x[1]+'/'}}())">this link</a> into your bookmarks bar and click it on a Scratch project page to view the project in phosphorus. Click it again to go back to Scratch.</p>
+  <p>Drag <a href="javascript:(function(){if(window.P_flash){P_container.style.marginTop=0;P_container.replaceChild(P_flash,P_container.querySelector('iframe'));P_flash=0;return}P_flash=document.querySelector('#scratch');if(P_flash){P_container=P_flash.parentNode;var s=document.createElement('script');s.src='https://phosphorus.herokuapp.com/embed.js?id='+Scratch.INIT_DATA.PROJECT.model.id+'&amp;auto-start=false&amp;light-content=false';P_container.replaceChild(s,P_flash);P_container.style.marginTop='14px'}}())">this link</a> into your bookmarks bar and click it on a Scratch project page to view the project in phosphorus. Click it again to go back to Scratch.</p>
 </section>
 <script src=fonts.js></script>
 <script src=lib/jszip/jszip.js></script>
