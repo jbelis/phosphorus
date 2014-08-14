@@ -1157,6 +1157,7 @@ var P = (function() {
     c.costumes = this.costumes;
     c.currentCostumeIndex = this.currentCostumeIndex;
     c.objName = this.objName;
+    c.soundRefs = this.soundRefs;
     c.sounds = this.sounds;
     c.variables = [];
     c.lists = [];
