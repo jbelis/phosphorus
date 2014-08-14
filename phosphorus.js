@@ -1657,6 +1657,14 @@ var P = (function() {
     this.audio = data.$audio;
   };
 
+  Sound.prototype.play = function() {
+    if (!this.audio.paused) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+    }
+    this.audio.play();
+  };
+
   var Watcher = function(stage) {
     this.stage = stage;
 
@@ -2459,7 +2467,10 @@ P.compile = (function() {
 
       // } else if (block[0] === 'setVideoTransparency') {
 
-      // } else if (block[0] === 'playSound:') { /* Sound */
+      } else if (block[0] === 'playSound:') { /* Sound */
+
+        source += 'var sound = S.soundRefs[' + val(block[1]) + '];\n';
+        source += 'if (sound) sound.play();\n';
 
       // } else if (block[0] === 'doPlaySoundAndWait') {
 
