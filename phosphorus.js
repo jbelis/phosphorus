@@ -202,7 +202,8 @@ var P = (function() {
   IO.load = function(url, callback, self, type) {
     var request = new Request;
     var xhr = new XMLHttpRequest;
-    xhr.open('GET', IO.PROXY_URL + encodeURIComponent(url), true);
+	  xhr.open('GET', url.substr(6), true);
+//	  xhr.open('GET', IO.PROXY_URL + encodeURIComponent(url), true);
     xhr.onprogress = function(e) {
       request.progress(e.loaded, e.total, e.lengthComputable);
     };
@@ -226,7 +227,8 @@ var P = (function() {
   IO.loadImage = function(url, callback, self) {
     var request = new Request;
     var image = new Image;
-    image.src = IO.PROXY_URL + encodeURIComponent(url);
+	  image.src = url.substr(6);
+//	  image.src = IO.PROXY_URL + encodeURIComponent(url);
     image.onload = function() {
       request.load(image);
     };
@@ -458,38 +460,38 @@ var P = (function() {
         var div = document.createElement('div');
         div.innerHTML = source;
         var svg = div.getElementsByTagName('svg')[0];
-        svg.style.visibility = 'hidden';
-        svg.style.position = 'absolute';
-        svg.style.left = '-10000px';
-        svg.style.top = '-10000px';
-        document.body.appendChild(svg);
-        var viewBox = svg.viewBox.baseVal;
-        if (viewBox.x || viewBox.y) {
-          svg.width.baseVal.value = viewBox.width - viewBox.x;
-          svg.height.baseVal.value = viewBox.height - viewBox.y;
-          viewBox.x = 0;
-          viewBox.y = 0;
-          viewBox.width = 0;
-          viewBox.height = 0;
-        }
-        IO.fixSVG(svg, svg);
-        while (div.firstChild) div.removeChild(div.lastChild);
-        div.appendChild(svg);
-        svg.style.visibility = 'visible';
+			  svg.style.visibility = 'hidden';
+			  svg.style.position = 'absolute';
+			  svg.style.left = '-10000px';
+			  svg.style.top = '-10000px';
+			  document.body.appendChild(svg);
+			  var viewBox = svg.viewBox.baseVal;
+			  if (viewBox.x || viewBox.y) {
+				  svg.width.baseVal.value = viewBox.width - viewBox.x;
+				  svg.height.baseVal.value = viewBox.height - viewBox.y;
+				  viewBox.x = 0;
+				  viewBox.y = 0;
+				  viewBox.width = 0;
+				  viewBox.height = 0;
+			  }
+			  IO.fixSVG(svg, svg);
+			  while (div.firstChild) div.removeChild(div.lastChild);
+			  div.appendChild(svg);
+			  svg.style.visibility = 'visible';
 
-        var canvas = document.createElement('canvas');
-        var image = new Image;
-        callback(image);
-        // svg.style.cssText = '';
-        // console.log(md5, 'data:image/svg+xml;base64,' + btoa(div.innerHTML.trim()));
-        canvg(canvas, div.innerHTML.trim(), {
-          ignoreMouse: true,
-          ignoreAnimation: true,
-          ignoreClear: true,
-          renderCallback: function() {
-            image.src = canvas.toDataURL();
-          }
-        });
+			  var canvas = document.createElement('canvas');
+			  var image = new Image;
+			  callback(image);
+			  // svg.style.cssText = '';
+			  // console.log(md5, 'data:image/svg+xml;base64,' + btoa(div.innerHTML.trim()));
+			  canvg(canvas, div.innerHTML.trim(), {
+				  ignoreMouse: true,
+				  ignoreAnimation: true,
+				  ignoreClear: true,
+				  renderCallback: function () {
+					  image.src = canvas.toDataURL();
+				  }
+			  });
       };
       if (IO.zip) {
         cb(IO.zip.file(id + '.svg').asText());
@@ -882,6 +884,7 @@ var P = (function() {
       if (child.resolve) child.resolve();
     }, this);
 
+
     P.compile(this);
 
     return this;
@@ -1044,6 +1047,10 @@ var P = (function() {
     }
   };
 
+	Stage.prototype.broadcast = function(message) {
+		this.trigger("whenIReceive", message);
+	};
+
   var KEY_CODES = {
     'space': 32,
     'left arrow': 37,
@@ -1086,6 +1093,9 @@ var P = (function() {
     this.saying = false;
     this.thinking = false;
     this.sayId = 0;
+
+	  this.timers = [];
+	  this.intervals = [];
   };
   inherits(Sprite, Base);
 
@@ -1566,9 +1576,75 @@ var P = (function() {
       this.stage.root.removeChild(this.bubble);
       this.bubble = null;
     }
+	  this.timers.forEach(function(timer) {
+		  clearTimeout(timer);
+	  });
+	  this.intervals.forEach(function(interval) {
+		  clearTimeout(interval);
+	  });
   };
 
-  var Costume = function(data) {
+  Sprite.prototype.on = function(eventName, listener, arg) {
+	  switch (eventName) {
+		  case 'click' :
+			  this.listeners.whenClicked.push(listener);
+			  break;
+		  case 'greenflag' :
+			  this.listeners.whenGreenFlag.push(listener);
+			  break;
+		  case 'clone' :
+			  this.listeners.whenCloned.push(listener);
+			  break;
+		  case 'keypress' :
+			  this.listeners.whenKeyPressed[P.getKeyCode(arg)].push(listener);
+			  break;
+		  case 'message' :
+			  var l = this.listeners.whenIReceive[arg.toLowerCase()];
+			  if (!l) {
+				  l = [];
+				  this.listeners.whenIReceive[arg.toLowerCase()] = l;
+			  }
+			  l.push(listener);
+			  break;
+		  case 'start' :
+			  this.listeners.whenSceneStarts.push(listener);
+			  break;
+		  default:
+			  console.log('Undefined event: ' + eventName);
+	  }
+  };
+
+	Sprite.prototype.getVar = function(name) {
+		var v = this.varRefs[name];
+		if (!v) {
+			v = {name: name, value: 0, isPeristent: false};
+			this.variables.push(this.varRefs[name] = v);
+		}
+		return v;
+	};
+
+	Sprite.prototype.changeVar = function(name, by) {
+		var v = this.getVar(name);
+		if (v) {
+			v.value += by;
+		}
+		return v;
+	};
+
+	Sprite.prototype.repeatForever = function(fn) {
+		this.intervals.push(setInterval(fn.bind(this), 1000/this.stage.framerate));
+	};
+
+	Sprite.prototype.show = function() {
+		this.visible = true;
+	};
+
+	Sprite.prototype.hide = function() {
+		this.visible = false;
+	};
+
+
+	var Costume = function(data) {
     this.baseLayerID = data.baseLayerID;
     this.baseLayerMD5 = data.baseLayerMD5;
     this.baseLayer = data.$image;
@@ -1878,10 +1954,24 @@ var P = (function() {
 
 }());
 
+P.script = (function() {
+
+	var scripts = {};
+
+	return {
+		define: function(name, fn) {
+			scripts[name] = fn;
+		},
+		require: function(name) {
+			return scripts[name];
+		}
+	}
+})();
+
 P.compile = (function() {
   'use strict';
 
-  var LOG_PRIMITIVES;
+	var LOG_PRIMITIVES;
   // LOG_PRIMITIVES = true;
 
   var EVENT_SELECTORS = [
@@ -2771,6 +2861,7 @@ P.compile = (function() {
           if (source.substr(i, 8) === '} else {') {
             if (brackets > 0) {
               result += '} else {';
+              result += '} else {';
               i += 7;
             } else {
               shouldDelete = true;
@@ -2836,9 +2927,15 @@ P.compile = (function() {
 
     for (var i = 0; i < stage.children.length; i++) {
       if (!stage.children[i].cmd) {
-        compileScripts(stage.children[i]);
-      }
-    }
+
+		  var scriptFactory = P.script.require(stage.children[i].objName);
+		  if (typeof scriptFactory === 'function') {
+			  scriptFactory(stage.children[i]);
+		  } else {
+			  compileScripts(stage.children[i]);
+		  }
+	  }
+	}
 
     for (var key in warnings) {
       console.warn(key + (warnings[key] > 1 ? ' (repeated ' + warnings[key] + ' times)' : ''));

@@ -1,1 +1,2 @@
-# [phosphorus.herokuapp.com](https://phosphorus.herokuapp.com)
+
+This fork of [nathan's phosphorus project](https://github.com/nathan/phosphorus) is an experiment to determine whether allowing students to re-implement scratch sprite behavior using javascript is a useful tool in introducing javascript syntax.
